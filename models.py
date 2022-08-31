@@ -17,6 +17,12 @@ class Payment(models.Model):
         if self.payment_agent:
             return self.payment_agent
 
+        self.handle_providers()
+
+        self.save()
+        return self.payment_agent
+
+    def handle_providers(self):
         if self.provider1.filter(type=1).count():
             self.payment_agent = u"Provider1"
         elif self.qprovider2.filter(type=1).count():
@@ -27,6 +33,3 @@ class Payment(models.Model):
             self.payment_agent = u"Complex Provider 4 Name With Surname"
         else:
             self.payment_agent = u"Provider5 Full Company-Name"
-
-        self.save()
-        return self.payment_agent
