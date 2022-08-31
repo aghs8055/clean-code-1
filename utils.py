@@ -68,14 +68,14 @@ class jsonic(object):
                 except AttributeError:
                     try:
                         thedic = getattr(obj, f)
-                    except AttributeError:
-                        pass
-                    except ObjectDoesNotExist:
-                        pass
+                    except AttributeError as e:
+                        print(e)
+                    except ObjectDoesNotExist as e:
+                        print(e)
                     else:
                         key = str(f)
-                except ObjectDoesNotExist:
-                    pass
+                except ObjectDoesNotExist as e:
+                    print(e)
                 else:
                     key = "%s_set" % f
 

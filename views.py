@@ -40,6 +40,48 @@ def get_objects_from_registers(registers, ids):
     return objects
 
 
+def get_post_params(payment, policy):
+    post_params = {
+        "payment_amount":
+            decimal.Decimal(transaction.amount).quantize(
+                decimal.Decimal('0.00000001'),
+                rounding=decimal.ROUND_DOWN).normalize(),
+        "payment_address":
+            transaction.address,
+        "payment_qr":
+            transaction.qrcode_url,
+        "gateway_status":
+            transaction.status_url,
+        "policy_cover":
+            policy.cover,
+        "exchange_name":
+            policy.exchange.name,
+        "date_of_formating":
+            policy.request_date.date(),
+        "currency":
+            currency
+    }
+
+    response = JsonResponse(post_params)
+    return response
+
+    message = "Payment Exist"
+    response = JsonResponse({
+        'status': 'false',
+        'message': message
+    })
+
+
+def get_error_message(e):
+    message = "Error contacting with the Gateway"
+    response = JsonResponse({
+        'status': 'false',
+        'message': message
+    })
+    response.status_code = 418
+    logger.error(e)
+
+
 @login_required
 def create_payment(request):
     # currency=BTC&version=1&cmd=get_callback_address&key=your_api_public_key&format=json
@@ -114,37 +156,10 @@ def create_payment(request):
                     policy.save()
 
             except Exception as e:
-                message = "Error contacting with the Gateway"
-                response = JsonResponse({
-                    'status': 'false',
-                    'message': message
-                })
-                response.status_code = 418
-                logger.error(e)
+                response = get_error_message(e)
                 return response
             else:
-                post_params = {
-                    "payment_amount":
-                        decimal.Decimal(transaction.amount).quantize(
-                            decimal.Decimal('0.00000001'),
-                            rounding=decimal.ROUND_DOWN).normalize(),
-                    "payment_address":
-                        transaction.address,
-                    "payment_qr":
-                        transaction.qrcode_url,
-                    "gateway_status":
-                        transaction.status_url,
-                    "policy_cover":
-                        policy.cover,
-                    "exchange_name":
-                        policy.exchange.name,
-                    "date_of_formating":
-                        policy.request_date.date(),
-                    "currency":
-                        currency
-                }
-
-                response = JsonResponse(post_params)
+                response = get_post_params(payment, policy)
                 return response
         else:
             # payment already exist
@@ -195,44 +210,10 @@ def create_payment(request):
 
 
                 except Exception as e:
-                    message = "Error contacting with the Gateway"
-                    response = JsonResponse({
-                        'status': 'false',
-                        'message': message
-                    })
-                    response.status_code = 418
-                    logger.error(e)
+                    response = get_error_message(e)
                     return response
                 else:
-                    post_params = {
-                        "payment_amount":
-                            decimal.Decimal(transaction.amount).quantize(
-                                decimal.Decimal('0.00000001'),
-                                rounding=decimal.ROUND_DOWN).normalize(),
-                        "payment_address":
-                            transaction.address,
-                        "payment_qr":
-                            transaction.qrcode_url,
-                        "gateway_status":
-                            transaction.status_url,
-                        "policy_cover":
-                            policy.cover,
-                        "exchange_name":
-                            policy.exchange.name,
-                        "date_of_formating":
-                            policy.request_date.date(),
-                        "currency":
-                            currency
-                    }
-
-                    response = JsonResponse(post_params)
-                    return response
-
-                    message = "Payment Exist"
-                    response = JsonResponse({
-                        'status': 'false',
-                        'message': message
-                    })
+                    response = get_post_params(payment, policy)
                     return response
             elif payment.status == PaymentStatus.PENDING:
                 logger.info('status Pending, do nothing')
