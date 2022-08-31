@@ -40,8 +40,8 @@ def get_objects_from_registers(registers, ids):
     return objects
 
 
-def get_post_params(payment, policy):
-    post_params = {
+def get_post_params_dict(payment, policy):
+    return {
         "payment_amount":
             decimal.Decimal(transaction.amount).quantize(
                 decimal.Decimal('0.00000001'),
@@ -62,6 +62,9 @@ def get_post_params(payment, policy):
             currency
     }
 
+
+def get_post_params(payment, policy):
+    post_params = get_post_params_dict(payment, policy)
     response = JsonResponse(post_params)
     return response
 
@@ -80,6 +83,20 @@ def get_error_message(e):
     })
     response.status_code = 418
     logger.error(e)
+
+
+def get_user_payment(transaction, currency):
+    return UserPayments(
+        status=0,
+        update_date=datetime.datetime.now(),
+        amount=transaction.amount,
+        address=transaction.address,
+        payment=transaction.txn_id,
+        confirms_needed=transaction.confirms_needed,
+        timeout=transaction.timeout,
+        status_url=transaction.status_url,
+        qrcode_url=transaction.qrcode_url,
+        currency=currency)
 
 
 @login_required
@@ -123,18 +140,7 @@ def create_payment(request):
 
             try:
                 try:
-                    payment = UserPayments(
-                        status=0,
-                        update_date=datetime.datetime.now(),
-                        amount=transaction.amount,
-                        address=transaction.address,
-                        payment=transaction.txn_id,
-                        confirms_needed=transaction.confirms_needed,
-                        timeout=transaction.timeout,
-                        status_url=transaction.status_url,
-                        qrcode_url=transaction.qrcode_url,
-                        currency=currency)
-
+                    payment = get_user_payment(transaction, currency)
                     try:
                         default_email = os.environ.get('DJANGO_EMAIL_DEFAULT_EMAIL')
                         subject = "Website: You’re one step away from being secured"
@@ -221,26 +227,7 @@ def create_payment(request):
             elif payment.status == PaymentStatus.SUCCESS:
                 logger.info('status Success')
                 transaction = policy.payment_id
-            post_params = {
-                "payment_amount":
-                    decimal.Decimal(transaction.amount).quantize(
-                        decimal.Decimal('0.00000001'),
-                        rounding=decimal.ROUND_DOWN).normalize(),
-                "payment_address":
-                    transaction.address,
-                "payment_qr":
-                    transaction.qrcode_url,
-                "gateway_status":
-                    transaction.status_url,
-                "policy_cover":
-                    policy.cover,
-                "exchange_name":
-                    policy.exchange.name,
-                "date_of_formating":
-                    policy.request_date.date(),
-                "currency":
-                    currency
-            }
+            post_params = get_post_params_dict(transaction, policy)
 
             response = JsonResponse(post_params)
             return response
