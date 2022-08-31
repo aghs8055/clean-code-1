@@ -98,17 +98,16 @@ class jsonic(object):
                         dic[key] = theuni
 
             ## now, do we have imagekit stuff in there?
-            if hasattr(obj, "_ik"):
-                if hasattr(obj, obj._ik.image_field):
-                    if hasattr(getattr(obj, obj._ik.image_field), 'size'):
-                        if getattr(obj, obj._ik.image_field):
-                            for ikaccessor in [getattr(obj, s.access_as) for s in obj._ik.specs]:
-                                key = ikaccessor.spec.access_as
-                                dic[key] = {
-                                    'url': ikaccessor.url,
-                                    'width': ikaccessor.width,
-                                    'height': ikaccessor.height,
-                                }
+            if hasattr(obj, "_ik") and hasattr(obj, obj._ik.image_field) and \
+                    hasattr(getattr(obj, obj._ik.image_field), 'size') and \
+                    getattr(obj, obj._ik.image_field):
+                for ikaccessor in [getattr(obj, s.access_as) for s in obj._ik.specs]:
+                    key = ikaccessor.spec.access_as
+                    dic[key] = {
+                        'url': ikaccessor.url,
+                        'width': ikaccessor.width,
+                        'height': ikaccessor.height,
+                    }
             return fn(obj, json=dic, **kwargs)
 
         return jsoner

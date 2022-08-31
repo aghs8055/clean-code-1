@@ -377,9 +377,9 @@ def dashboard(request):
         logger.info(
             "Partner: %s logged into system" % (userPartner))
         return account(request)
-    except ObjectDoesNotExist:
+    except ObjectDoesNotExist as e:
         # handle case for regular user
-        pass
+        print(e)
 
     insurancy_policy_info = Policy.objects.order_by('-id').filter(
         user=user.id).exclude(status=PolicyStatus.DELETED)
