@@ -2,7 +2,7 @@
 
 class Payment(models.Model):
     is_paid = models.BooleanField(default=False)
-    payment_agent = models.CharField(max_length=30)    
+    payment_agent = models.CharField(max_length=30)
 
     # WHAT?!
     def get_payment_agent(self):
